@@ -2,12 +2,19 @@
 title: "Etude statistique"
 author: " "
 date: "2025-03-10"
-output: pdf_document
+
+output: 
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
 knitr:
   opts_chunk: 
     echo: false
-    fig.width: 5
-    fig.height: 3
+    fig.width: 6
+    fig.height: 4
+    dpi: 300
+  
 ---
 
 ```{r setup, include=FALSE}
@@ -21,33 +28,83 @@ library(tidyr)
 library(lubridate)
 library(ggcorrplot)
 library(reshape2)
+library(kableExtra)
+library(wordcloud2)
 ```
 
 ```{r, echo=FALSE}
 data_clean <- read.csv("Data/data_clean.csv")
 ```
 
+# Introduction
+
+Cette étude statistique a pour but d’analyser les comportements et ressentis des joueurs de football avant un match. Nous explorons notamment la relation entre l’expérience et l’anxiété, ainsi que les difficultés rencontrées. L’étude repose sur un échantillon de 90 joueurs ayant répondu à un questionnaire détaillé.
+
+
+```{r, echo=FALSE}
+ggplot(data_clean, aes(x = Sexe, fill = Sexe)) +
+  geom_bar(alpha = 0.8) +
+  scale_fill_manual(values = c("femme" = "#E69F00", "homme" = "#56B4E9")) +
+  labs(title = "Répartition des joueurs selon le sexe", x = "Sexe", y = "Nombre de joueurs") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+
+
+# Age
+
 Histogramme des âges des joueurs en 2025:
 
 ```{r, echo=FALSE, fig.width=5, fig.height=3}
 ggplot(data_clean, aes(x = Age)) +
-  geom_histogram(binwidth = 1, fill = "blue", color = "black", alpha = 0.7) +
-  labs(title = "Distribution des âges des joueurs en 2025",
-       x = "Âge en 2025", y = "Nombre de joueurs") +
+  geom_histogram(binwidth = 1, fill = "#0073C2", color = "black", alpha = 0.7) +
+  labs(title = "Distribution des âges des joueurs en 2025", x = "Âge en 2025", y = "Nombre de joueurs") +
   theme_minimal()
+
 ```
+
+```{r, echo=FALSE}
+table(data_clean$Age)
+```
+
+repartition des age
+```{r, echo=FALSE}
+summary(data_clean$Age)
+```
+
+
 <br>
+
+# Nombre d' anne de foot
+
+J'ai pris en fonction de l'annee ou la personne a commencé, ne tient pas en
+si la personne a fait une pause.
 
 Histogramme du nombre d’années de pratique du football:
 
 ```{r, echo=FALSE, fig.width=5, fig.height=3}
 ggplot(data_clean, aes(x = Nb_annee_foot)) +
   geom_histogram(binwidth = 2, fill = "orange", color = "black", alpha = 0.7) +
-  labs(title = "Distribution du nombre d’années de pratique du football",
+  labs(title = "Distribution du nombre d’années \n de pratique du football",
        x = "Années de pratique", y = "Nombre de joueurs") +
   theme_minimal()
 ```
+
+```{r, echo=FALSE}
+table(data_clean$Nb_annee_foot)
+```
+
+repartition du nombre d'annees de foot
+```{r, echo=FALSE}
+summary(data_clean$Nb_annee_foot)
+```
+
 <br>
+
+# Temps passer sur le questionnaire
 
 Analyse du temps passé par questionnaire:
 
@@ -58,6 +115,13 @@ ggplot(data_clean, aes(x = Temps_en_min)) +
        x = "Temps en minutes", y = "Nombre de joueurs") +
   theme_minimal()
 ```
+
+```{r, echo=FALSE}
+summary(data_clean$Temps_en_min)
+```
+
+
+
 <br>
 
 Comparaison du temps moyen passé par sexe:
@@ -65,13 +129,13 @@ Comparaison du temps moyen passé par sexe:
 ```{r, echo=FALSE, fig.width=5, fig.height=3}
 ggplot(data_clean, aes(x = Sexe, y = Temps_en_min, fill = Sexe)) +
   geom_boxplot(alpha = 0.7) +
-  labs(title = "Comparaison du temps passé sur le questionnaire selon le sexe",
+  labs(title = "Comparaison du temps passé sur le questionnaire\n selon le sexe",
        x = "Sexe", y = "Temps en minutes") +
   theme_minimal()
 ```
 <br>
 
-Analyse de l’anxiété avant un match:
+# Analyse de l’anxiété avant un match:
 
 ```{r, echo=FALSE, fig.width=5, fig.height=3}
 ggplot(data_clean, aes(x = Anxiete_avant_match)) +
@@ -87,11 +151,29 @@ Comparaison de l’anxiété entre hommes et femmes:
 ```{r, echo=FALSE, fig.width=5, fig.height=3}
 ggplot(data_clean, aes(x = Sexe, y = Anxiete_avant_match, fill = Sexe)) +
   geom_boxplot(alpha = 0.7) +
-  labs(title = "Comparaison de l’anxiété avant un match selon le sexe",
+  labs(title = "Comparaison de l’anxiété avant un match \n selon le sexe",
        x = "Sexe", y = "Niveau d’anxiété (0-10)") +
   theme_minimal()
 
 ```
+
+```{r, echo=FALSE}
+table(data_clean$Anxiete_avant_match, data_clean$Sexe)
+```
+
+Test de corrélation entre l’expérience et l’anxiété :
+```{r, echo=FALSE}
+cor.test(data_clean$Nb_annee_foot, data_clean$Anxiete_avant_match)
+```
+
+la corrélation est significative (p < 0.05), on peut conclure que l’expérience influence réellement le niveau d’anxiété avant un match.
+
+
+Test de comparaison des moyennes (t-test ou ANOVA) entre hommes et femmes :
+```{r, echo=FALSE}
+t.test(data_clean$Anxiete_avant_match ~ data_clean$Sexe)
+```
+
 <br>
 
 Corrélation entre l’expérience et l’anxiété:
@@ -100,70 +182,150 @@ Corrélation entre l’expérience et l’anxiété:
 ggplot(data_clean, aes(x = Nb_annee_foot, y = Anxiete_avant_match)) +
   geom_point(alpha = 0.7, color = "blue") +
   geom_smooth(method = "lm", color = "red", se = FALSE) +
-  labs(title = "Relation entre l'expérience et l'anxiété avant un match",
+  labs(title = "Relation entre l'expérience et l'anxiété \n avant un match",
        x = "Années de pratique du football", y = "Niveau d'anxiété (0-10)") +
   theme_minimal()
 
 ```
 <br>
 
+# Niveau de difficultes
+
 Analyse des difficultés avant un match:
 
-```{r, echo=FALSE, fig.width=5, fig.height=3}
-ggplot(data_clean, aes(x = Difficultes_avant_match)) +
-  geom_bar(fill = "green", color = "black", alpha = 0.7) +
-  labs(title = "Difficultés ressenties avant un match",
-       x = "Type de difficulté", y = "Nombre de joueurs") +
-  theme_minimal() +
-  coord_flip()  # Pour mieux lire les labels
+![barplot difficultes avant match](Image/barplot_Difficultes_avant_match.png)
 
-```
 <br>
 
-Heatmap des affirmations (Accord/Désaccord):
 
-```{r, echo=FALSE, fig.width=5, fig.height=3}
-# Sélectionner les colonnes des affirmations
-affirmations <- data_clean[, grep("Affirmation", names(data_clean))]
+![barplot](Image/barplot_mots_sexe.png)
 
-# Convertir en format long
-affirmations_melted <- melt(affirmations, id.vars = NULL, variable.name = "Affirmation", value.name = "Réponse")
+![wordcloud](Image/all_wordcloud.png)
 
-# Graphe en heatmap
-# Compter les occurrences des réponses pour chaque affirmation
-affirmation_counts <- affirmations_melted %>%
-  count(Affirmation, Réponse)
+![wordcloud femme](Image/wordcloud_femme.png)
 
-# Afficher la heatmap correctement
-ggplot(affirmation_counts, aes(x = Affirmation, y = Réponse, fill = n)) +
-  geom_tile() +
-  scale_fill_gradient(low = "white", high = "blue") +
-  labs(title = "Répartition des réponses aux affirmations",
-       x = "Affirmations", y = "Réponses", fill = "Fréquence") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
-  coord_flip()
-```
-
-```{r}
-
-```
-
-```{r}
-
-```
-
-```{r}
-
-```
-
-```{r}
-
-```
+![wordcloud homme](Image/wordcloud_homme.png)
 
 
+# affirmation 1
+
+affirmation 1
+
+![barplot affirmation 1](Image/barplot_Affirmation.1.png)
 
 
+# affirmation 12
+
+affirmation 12
+
+![barplot affirmation 12](Image/barplot_Affirmation.12.png)
+
+
+# affirmation 13
+
+affirmation 13 
+
+![barplot affirmation 13](Image/barplot_Affirmation.13.png)
+
+# affirmation 14
+
+affirmation 14
+
+![barplot affirmation 14](Image/barplot_Affirmation.14.png)
+
+# affirmation 15
+
+affirmation 15
+
+![barplot affirmation 15](Image/barplot_Affirmation.15.png)
+
+# affirmation 16
+
+affirmation 16
+
+![barplot affirmation 16](Image/barplot_Affirmation.16.png)
+
+# affirmation 17
+
+affirmation 17
+
+![barplot affirmation 17](Image/barplot_Affirmation.17.png)
+
+# affirmation 18
+
+affirmation 18
+
+![barplot affirmation 18](Image/barplot_Affirmation.18.png)
+
+# affirmation 19
+
+affirmation 19
+
+![barplot affirmation 19](Image/barplot_Affirmation.19.png)
+
+# affirmation 110
+
+affirmation 110
+
+![barplot affirmation 110](Image/barplot_Affirmation.110.png)
+
+# affirmation 111
+
+affirmation 111
+
+![barplot affirmation 111](Image/barplot_Affirmation.111.png)
+
+# affirmation 112
+
+affirmation 112
+
+![barplot affirmation 112](Image/barplot_Affirmation.112.png)
+
+# affirmation 113
+
+affirmation 113
+
+![barplot affirmation 113](Image/barplot_Affirmation.113.png)
+
+# affirmation 114
+
+affirmation 114
+
+![barplot affirmation 114](Image/barplot_Affirmation.114.png)
+
+# affirmation 115
+
+affirmation 115
+
+![barplot affirmation 115](Image/barplot_Affirmation.115.png)
+
+# affirmation 116
+
+affirmation 116
+
+![barplot affirmation 116](Image/barplot_Affirmation.116.png)
+
+# affirmation 117
+
+affirmation 117
+
+![barplot affirmation 117](Image/barplot_Affirmation.117.png)
+
+
+
+# Conclusion
+
+Nos analyses montrent que les joueurs ayant plus d’expérience ont un niveau d’anxiété globalement plus faible avant un match, bien que certaines différences persistent selon le sexe.
+L’anxiété avant un match est un facteur clé qui peut influencer la performance, et des stratégies comme la préparation mentale ou la gestion du stress pourraient être recommandées aux jeunes joueurs.
+
+
+### "Limites de l’étude"
+
+Cela rendra ton rapport plus rigoureux en précisant les éventuelles faiblesses :
+
+Échantillon limité 90 joureur. <br>
+Données déclaratives (les joueurs peuvent sous-estimer ou surestimer leur anxiété). <br>
+Autres facteurs non étudiés (fatigue, conditions climatiques...).<br>
 
 
 

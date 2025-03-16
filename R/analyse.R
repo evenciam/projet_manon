@@ -92,6 +92,37 @@ ggplot(affirmation_counts, aes(x = Affirmation, y = Réponse, fill = n)) +
   coord_flip()
 
 
+##### barplot
+
+data_clean2 <- data_clean[-c(1,2,3,4,5,7,28)]
+
+# Identifier les variables qualitatives
+qualitative_vars <- names(data_clean2)[sapply(data_clean2, function(x) is.factor(x) || is.character(x))]
+
+# Vérifier les variables qualitatives identifiées
+print(qualitative_vars)
+
+qualitative_vars
+
+for (var in qualitative_vars) {
+  
+  p <- ggplot(data_clean, aes_string(x = var)) +
+    geom_bar(fill = "steelblue", color = "black", alpha = 0.7) +
+    labs(title = paste("Répartition de", var),
+         x = var, y = "Nombre d'observations") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+  
+  # Enregistrer le graphique
+  ggsave(filename = paste0("Image/barplot_", var, ".png"), plot = p, width = 6, height = 4, dpi = 300)
+}
+
+
+
+
+
+
+
 
 
 ##### ACP
